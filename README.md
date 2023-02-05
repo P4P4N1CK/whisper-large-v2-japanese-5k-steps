@@ -7,6 +7,10 @@ metrics:
 model-index:
 - name: whisper-large-v2-japanese-5k-steps
   results: []
+datasets:
+- mozilla-foundation/common_voice_11_0
+language:
+- ja
 ---
 
 <!-- This model card has been generated automatically according to the information the Trainer had access to. You
