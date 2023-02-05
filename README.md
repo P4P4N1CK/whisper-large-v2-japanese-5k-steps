@@ -25,9 +25,9 @@ This model is finetuned for 5000 steps for research purposes which means that th
 
 ## Training and evaluation data
 
-Training Data: CommonVoice (v11) train split
-Validation Data: CommonVoice (v11) Validation split
-Test Data: CommonVoice (v11) Test split
+- Training Data: CommonVoice (v11) train split
+- Validation Data: CommonVoice (v11) Validation split
+- Test Data: CommonVoice (v11) Test split
 
 ## Training procedure
 
