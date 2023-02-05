@@ -65,8 +65,8 @@ from transformers import WhisperProcessor, WhisperForConditionalGeneration
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # load the model
-processor = WhisperProcessor.from_pretrained("clu-ling/whisper-large-v2-arabic-5k-steps")
-model = WhisperForConditionalGeneration.from_pretrained("clu-ling/whisper-large-v2-arabic-5k-steps").to(device)
+processor = WhisperProcessor.from_pretrained("clu-ling/whisper-large-v2-japanese-5k-steps")
+model = WhisperForConditionalGeneration.from_pretrained("clu-ling/whisper-large-v2-japanese-5k-steps").to(device)
 forced_decoder_ids = processor.get_decoder_prompt_ids(language="ja", task="transcribe")
 
 # load the dataset
