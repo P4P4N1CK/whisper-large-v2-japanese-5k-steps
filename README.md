@@ -79,15 +79,69 @@ commonvoice_eval = commonvoice_eval.cast_column("audio", Audio(sampling_rate=160
 sample = next(iter(commonvoice_eval))["audio"]
 
 # features and generate token ids
-input_features = processor(sample["array"], sampling_rate=input_speech["sampling_rate"], return_tensors="pt").input_features
+input_features = processor(sample["array"], sampling_rate=sample["sampling_rate"], return_tensors="pt").input_features
 predicted_ids = model.generate(input_features.to(device), forced_decoder_ids=forced_decoder_ids)
 
 # decode
-transcription = processor.batch_decode(predicted_ids)
 transcription = processor.batch_decode(predicted_ids, skip_special_tokens=True)
 
 print(transcription)
 
+```
+
+### Evaluation:
+
+Evaluates this model on `mozilla-foundation/common_voice_11_0` test split.
+
+```python
+from transformers.models.whisper.english_normalizer import BasicTextNormalizer
+from datasets import load_dataset, Audio
+import evaluate
+import torch
+import re
+from transformers import WhisperProcessor, WhisperForConditionalGeneration
+
+# device
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# metric
+wer_metric = evaluate.load("wer")
+
+# model
+processor = WhisperProcessor.from_pretrained("clu-ling/whisper-large-v2-japanese-5k-steps")
+model = WhisperForConditionalGeneration.from_pretrained("clu-ling/whisper-large-v2-japanese-5k-steps")
+
+# dataset
+dataset = load_dataset("mozilla-foundation/common_voice_11_0", "ja", split="test", ) #cache_dir=args.cache_dir
+dataset = dataset.cast_column("audio", Audio(sampling_rate=16000))
+
+#for debuggings: it gets some examples
+#dataset = dataset.shard(num_shards=7000, index=0)
+#print(dataset)
+   
+def normalize(batch):
+  batch["gold_text"] = whisper_norm(batch['sentence'])
+  return batch
+
+def map_wer(batch):
+  model.to(device)
+  forced_decoder_ids = processor.get_decoder_prompt_ids(language = "ja", task = "transcribe")
+  inputs = processor(batch["audio"]["array"], sampling_rate=batch["audio"]["sampling_rate"], return_tensors="pt").input_features
+  with torch.no_grad():
+    generated_ids = model.generate(inputs=inputs.to(device), forced_decoder_ids=forced_decoder_ids)
+    transcription = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
+  batch["predicted_text"] = whisper_norm(transcription)
+  return batch
+
+# process GOLD text
+processed_dataset = dataset.map(normalize)
+# get predictions
+predicted = processed_dataset.map(map_wer)
+
+# word error rate
+wer = wer_metric.compute(references=predicted['gold_text'], predictions=predicted['predicted_text'])
+wer = round(100 * wer, 2)
+print("WER:", wer)
 ```
 
 ### Framework versions
